@@ -4,6 +4,16 @@ import android.view.Gravity;
 import android.widget.Toast;
 
 public class AndroidUtils extends Plugin {
+
+    private static AndroidUtils _instance;
+
+    public static AndroidUtils getInstance() {
+        if(_instance == null) {
+            _instance = new AndroidUtils();
+        }
+        return _instance;
+    }
+
     public static void toast(String text) {
         _context.runOnUiThread(new Runnable() {
             @Override

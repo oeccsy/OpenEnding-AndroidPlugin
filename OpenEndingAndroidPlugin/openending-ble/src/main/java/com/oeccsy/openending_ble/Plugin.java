@@ -5,13 +5,8 @@ import android.app.Activity;
 import com.unity3d.player.UnityPlayer;
 
 public class Plugin {
-    protected static Plugin _instance;
     protected static Activity _context;
-    public static Plugin instance() {
-        if(_instance == null) {
-            _instance = new Plugin();
+    public Plugin() {
             _context = UnityPlayer.currentActivity;
-        }
-        return _instance;
     }
 }
