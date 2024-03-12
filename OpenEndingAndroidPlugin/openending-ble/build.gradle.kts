@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "com.oeccsy.openending_ble"
-    compileSdk = 33
+    compileSdk = 31
 
     defaultConfig {
         minSdk = 26
@@ -30,9 +30,4 @@ android {
 
 dependencies {
     compileOnly(files("libs\\classes.jar"))
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.11.0")
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }
