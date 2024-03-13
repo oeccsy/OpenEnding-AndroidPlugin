@@ -18,9 +18,7 @@ public class AndroidUtils extends Plugin {
         _context.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast toast = Toast.makeText(_context, text, Toast.LENGTH_LONG);
-                toast.setGravity(Gravity.CENTER | Gravity.BOTTOM, 0, 0);
-                toast.show();
+                Toast.makeText(_context, text, Toast.LENGTH_LONG).show();
             }
         });
     }
