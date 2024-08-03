@@ -46,9 +46,11 @@ public class BluetoothLEUtils extends Plugin {
             AndroidUtils.toast("BLE Supported");
             return true;
         }
-
-        AndroidUtils.toast("BLE not Supported");
-        return false;
+        else
+        {
+            AndroidUtils.toast("BLE not Supported");
+            return false;
+        }
     }
 
     public boolean hasBluetoothLEPermissions() {
@@ -59,7 +61,7 @@ public class BluetoothLEUtils extends Plugin {
                 }
             }
         } else {
-            for (String permission : permissions) {
+            for (String permission : permissionsApi31) {
                 if (_context.checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
                     return false;
                 }
@@ -70,15 +72,21 @@ public class BluetoothLEUtils extends Plugin {
     }
 
     public boolean isBluetoothLEEnable() {
-        if (BluetoothAdapter.getDefaultAdapter().isEnabled()) return true;
-        return false;
+        if (BluetoothAdapter.getDefaultAdapter().isEnabled())
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     public void requestPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            _context.requestPermissions(permissionsApi31, REQUEST_PERMISSION_CODE_S);
+            _activity.requestPermissions(permissionsApi31, REQUEST_PERMISSION_CODE_S);
         } else {
-            _context.requestPermissions(permissions, REQUEST_PERMISSION_CODE);
+            _activity.requestPermissions(permissionsApi31, REQUEST_PERMISSION_CODE);
         }
         AndroidUtils.toast("permission request done!");
     }

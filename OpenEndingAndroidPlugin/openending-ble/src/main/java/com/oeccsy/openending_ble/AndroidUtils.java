@@ -15,7 +15,7 @@ public class AndroidUtils extends Plugin {
     }
 
     public static void toast(String text) {
-        _context.runOnUiThread(new Runnable() {
+        _activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 Toast.makeText(_context, text, Toast.LENGTH_LONG).show();
