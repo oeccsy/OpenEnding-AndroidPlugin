@@ -51,7 +51,7 @@ public class Peripheral extends Plugin {
         AndroidUtils.toast("init done!");
     }
 
-    public void startAdvertising(String deviceName, int deviceNum) {
+    public void startAdvertising(String deviceName) {
         if(!bluetoothAdapter.isEnabled()) return;
         bluetoothAdapter.setName(deviceName);
 
@@ -108,6 +108,12 @@ public class Peripheral extends Plugin {
         bluetoothGattServer.addService(GameProfile.getService());
 
         AndroidUtils.toast("start Gatt Server!");
+    }
+
+    private void stopServer() {
+        if(bluetoothGattServer == null) return;
+
+        bluetoothGattServer.close();
     }
 
     private BluetoothGattServerCallback gattServerCallback = new BluetoothGattServerCallback() {
@@ -173,17 +179,11 @@ public class Peripheral extends Plugin {
         }
     };
 
-    private void stopServer() {
-        if(bluetoothGattServer == null) return;
-
-        bluetoothGattServer.close();
-    }
-
     //P -> C 송신
     private void indicate(byte[] data) {
         BluetoothDevice device = centralDevice;
 
-        BluetoothGattCharacteristic characteristic = bluetoothGattServer.getService(GameProfile.GAME_SERVICE).getCharacteristic(GameProfile.TEST_A);
+        BluetoothGattCharacteristic characteristic = bluetoothGattServer.getService(GameProfile.GAME_SERVICE).getCharacteristic(GameProfile.GAME_DATA);
         characteristic.setValue(data);
 
         bluetoothGattServer.notifyCharacteristicChanged(device, characteristic, true);

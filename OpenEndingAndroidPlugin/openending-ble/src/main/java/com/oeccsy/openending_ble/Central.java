@@ -160,7 +160,7 @@ public class Central extends Plugin {
                     Log.i("OpenEnding", "service 발견 성공 : " + gatt.getDevice().getName());
 
                     BluetoothGattService service = gatt.getService(GameProfile.GAME_SERVICE);
-                    BluetoothGattCharacteristic characteristic = service.getCharacteristic(GameProfile.TEST_A);
+                    BluetoothGattCharacteristic characteristic = service.getCharacteristic(GameProfile.GAME_DATA);
                     gatt.setCharacteristicNotification(characteristic, true);
 
                     BluetoothGattDescriptor descriptor = characteristic.getDescriptor(GameProfile.CLIENT_CHARACTERISTIC_CONFIG);
@@ -243,7 +243,7 @@ public class Central extends Plugin {
     public void write(String deviceName, byte[] data) {
         BluetoothGatt gatt = connectedGATT.get(deviceName);
         BluetoothGattService service = gatt.getService(GameProfile.GAME_SERVICE);
-        BluetoothGattCharacteristic characteristic = service.getCharacteristic(GameProfile.TEST_A);
+        BluetoothGattCharacteristic characteristic = service.getCharacteristic(GameProfile.GAME_DATA);
 
         characteristic.setValue(data);
         characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);

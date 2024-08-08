@@ -18,12 +18,8 @@ public class AndroidUtils extends Plugin {
         _activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(_context, text, Toast.LENGTH_LONG).show();
+                Toast.makeText(_context, text, Toast.LENGTH_SHORT).show();
             }
         });
-    }
-
-    public static int returnInt() {
-        return 132341;
     }
 }
