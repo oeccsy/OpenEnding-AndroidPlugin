@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
@@ -17,9 +18,13 @@ import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.os.Handler;
 import android.os.ParcelUuid;
+import android.util.Base64;
 import android.util.Log;
 
+import com.unity3d.player.UnityPlayer;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class Central extends Plugin {
@@ -38,13 +43,18 @@ public class Central extends Plugin {
     private Handler centralThreadHandler;
 
     private ArrayList<BluetoothDevice> scanResults = new ArrayList<BluetoothDevice>();
-    private HashMap<String, BluetoothDevice> connectedDevices = new HashMap();
     private HashMap<String, BluetoothGatt> connectedGATT = new HashMap();
 
     public void initBluetoothSystem() {
         bluetoothManager = (BluetoothManager) _context.getSystemService(BLUETOOTH_SERVICE);
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         centralThreadHandler = new Handler();
+
+        for(BluetoothGatt gatt : connectedGATT.values()) {
+            gatt.disconnect();
+            gatt.close();
+        }
+        connectedGATT.clear();
 
         Log.i("OpenEnding", "Init BluetoothLE System");
         AndroidUtils.toast("init done!");
@@ -127,14 +137,58 @@ public class Central extends Plugin {
 
             switch(newState) {
                 case BluetoothProfile.STATE_CONNECTED :
+                    gatt.discoverServices();
                     connectedGATT.put(gatt.getDevice().getName(), gatt);
                     AndroidUtils.toast("connect : " + gatt.getDevice().getName());
                     Log.i("OpenEnding", "Connect : " + gatt.getDevice().getName());
                     break;
                 case BluetoothProfile.STATE_DISCONNECTED :
+                    gatt.disconnect();
+                    gatt.close();
                     connectedGATT.remove(gatt.getDevice().getName());
                     AndroidUtils.toast("disconnect : " + gatt.getDevice().getName());
                     Log.i("OpenEnding", "Disconnect : " + gatt.getDevice().getName());
+                    break;
+            }
+        }
+
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+
+            switch(status) {
+                case BluetoothGatt.GATT_SUCCESS:
+                    AndroidUtils.toast("service 발견 성공 : " + gatt.getDevice().getName());
+                    Log.i("OpenEnding", "service 발견 성공 : " + gatt.getDevice().getName());
+
+                    BluetoothGattService service = gatt.getService(GameProfile.GAME_SERVICE);
+                    BluetoothGattCharacteristic characteristic = service.getCharacteristic(GameProfile.TEST_A);
+                    gatt.setCharacteristicNotification(characteristic, true);
+
+                    BluetoothGattDescriptor descriptor = characteristic.getDescriptor(GameProfile.CLIENT_CHARACTERISTIC_CONFIG);
+                    descriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
+                    gatt.writeDescriptor(descriptor);
+
+                    AndroidUtils.toast("descriptor 설정 : " + gatt.getDevice().getName());
+                    Log.i("OpenEnding", "descriptor 설정 : " + gatt.getDevice().getName());
+                    break;
+                default:
+                    AndroidUtils.toast("service 발견 실패 : " + gatt.getDevice().getName());
+                    Log.i("OpenEnding", "service 발견 실패 : " + gatt.getDevice().getName());
+                    break;
+            }
+        }
+
+        @Override
+        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+            super.onDescriptorWrite(gatt, descriptor, status);
+
+            switch(status) {
+                case BluetoothGatt.GATT_SUCCESS:
+                    AndroidUtils.toast("descriptor 설정 완료 : " + gatt.getDevice().getName());
+                    Log.i("OpenEnding", "descriptor 설정 완료 : " + gatt.getDevice().getName());
+                    break;
+                default:
+                    AndroidUtils.toast("descriptor 설정 실패 : " + gatt.getDevice().getName());
+                    Log.i("OpenEnding", "descriptor 설정 실패 : " + gatt.getDevice().getName());
                     break;
             }
         }
@@ -143,10 +197,13 @@ public class Central extends Plugin {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             super.onCharacteristicChanged(gatt, characteristic);
+            Log.i("OpenEnding", "onCharacteristicChanged");
+            AndroidUtils.toast("data receive : " + characteristic.getValue());
 
-            String msg = characteristic.getStringValue(0);
-            AndroidUtils.toast(msg);
-            Log.i("OpenEnding", "Disconnect : " + gatt.getDevice().getAddress());
+            byte[] data = characteristic.getValue();
+
+            String encodedData = Base64.encodeToString(Arrays.copyOfRange(data, 0, data.length), 0);
+            UnityPlayer.UnitySendMessage("AARTest", "OnDataReceive", encodedData);
         }
 
         @Override
@@ -185,7 +242,7 @@ public class Central extends Plugin {
     //C->P 송신
     public void write(String deviceName, byte[] data) {
         BluetoothGatt gatt = connectedGATT.get(deviceName);
-        BluetoothGattService service = GameProfile.getService();
+        BluetoothGattService service = gatt.getService(GameProfile.GAME_SERVICE);
         BluetoothGattCharacteristic characteristic = service.getCharacteristic(GameProfile.TEST_A);
 
         characteristic.setValue(data);

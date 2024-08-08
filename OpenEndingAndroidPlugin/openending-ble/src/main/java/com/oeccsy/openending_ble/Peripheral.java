@@ -142,29 +142,20 @@ public class Peripheral extends Plugin {
             String uuid = characteristic.getUuid().toString();
 
             bluetoothGattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, null);
-
-//            UUID uuid = characteristic.getUuid();
-//            switch(uuid.toString())
-//            {
-//                case "Test":
-//                    bluetoothGattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, {0, 1, 2});
-//                    break;
-//                default :
-//                    bluetoothGattServer.sendResponse(device, requestId, BluetoothGatt.GATT_FAILURE, 0, null);
-//                    break;
-//            }
         }
 
         //C->P 수신
         @Override
         public void onCharacteristicWriteRequest(BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
+            super.onCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset, value);
             Log.i("OpenEnding", "onCharacteristicWriteRequest");
+            AndroidUtils.toast("data receive : " + value[0]);
 
             BluetoothGattCharacteristic ownDeviceCharacteristic = GameProfile.getService().getCharacteristic(characteristic.getUuid());
             ownDeviceCharacteristic.setValue(value);
 
-            String message = Base64.encodeToString(Arrays.copyOfRange(value, 0, value.length), 0);
-            UnityPlayer.UnitySendMessage("AARTest", "OnDataReceive", message);
+            String encodedData = Base64.encodeToString(Arrays.copyOfRange(value, 0, value.length), 0);
+            UnityPlayer.UnitySendMessage("AARTest", "OnDataReceive", encodedData);
 
             bluetoothGattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, null);
         }
@@ -189,12 +180,15 @@ public class Peripheral extends Plugin {
     }
 
     //P -> C 송신
-    private void indicate(String name, byte[] data) {
+    private void indicate(byte[] data) {
         BluetoothDevice device = centralDevice;
 
         BluetoothGattCharacteristic characteristic = bluetoothGattServer.getService(GameProfile.GAME_SERVICE).getCharacteristic(GameProfile.TEST_A);
         characteristic.setValue(data);
 
         bluetoothGattServer.notifyCharacteristicChanged(device, characteristic, true);
+
+        Log.i("OpenEnding", "indicate");
+        AndroidUtils.toast("indicate");
     }
 }
