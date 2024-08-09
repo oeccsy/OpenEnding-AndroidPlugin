@@ -131,11 +131,15 @@ public class Peripheral extends Plugin {
             switch(newState) {
                 case BluetoothProfile.STATE_CONNECTED :
                     centralDevice = device;
+                    UnityPlayer.UnitySendMessage("AndroidConnection", "OnDeviceConnected", device.getName());
+
                     AndroidUtils.toast("connect");
                     Log.i("OpenEnding", "Connect : " + device.getAddress());
                     break;
                 case BluetoothProfile.STATE_DISCONNECTED :
                     centralDevice = null;
+                    UnityPlayer.UnitySendMessage("AndroidConnection", "OnDeviceDisconnected", device.getName());
+
                     AndroidUtils.toast("disconnect");
                     Log.i("OpenEnding", "Disconnect : " + device.getAddress());
                     break;
@@ -155,13 +159,13 @@ public class Peripheral extends Plugin {
         public void onCharacteristicWriteRequest(BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
             super.onCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset, value);
             Log.i("OpenEnding", "onCharacteristicWriteRequest");
-            AndroidUtils.toast("data receive : " + value[0]);
+            AndroidUtils.toast("data receive");
 
             BluetoothGattCharacteristic ownDeviceCharacteristic = GameProfile.getService().getCharacteristic(characteristic.getUuid());
             ownDeviceCharacteristic.setValue(value);
 
             String encodedData = Base64.encodeToString(Arrays.copyOfRange(value, 0, value.length), 0);
-            UnityPlayer.UnitySendMessage("AARTest", "OnDataReceive", encodedData);
+            UnityPlayer.UnitySendMessage("AndroidConnection", "OnDataReceive", encodedData);
 
             bluetoothGattServer.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, offset, null);
         }
@@ -183,7 +187,7 @@ public class Peripheral extends Plugin {
     private void indicate(byte[] data) {
         BluetoothDevice device = centralDevice;
 
-        BluetoothGattCharacteristic characteristic = bluetoothGattServer.getService(GameProfile.GAME_SERVICE).getCharacteristic(GameProfile.GAME_DATA);
+        BluetoothGattCharacteristic characteristic = bluetoothGattServer.getService(GameProfile.GAME_SERVICE).getCharacteristic(GameProfile.CHARACTERISTIC_GAME_DATA);
         characteristic.setValue(data);
 
         bluetoothGattServer.notifyCharacteristicChanged(device, characteristic, true);

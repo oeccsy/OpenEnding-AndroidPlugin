@@ -126,6 +126,22 @@ public class Central extends Plugin {
     private BluetoothGattCallback bluetoothGattCallBack = new BluetoothGattCallback() {
 
         @Override
+        public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
+            super.onMtuChanged(gatt, mtu, status);
+
+            switch(status) {
+                case BluetoothGatt.GATT_SUCCESS:
+                    AndroidUtils.toast("mtu 변경 성공 : " + mtu);
+                    Log.i("OpenEnding", "mtu 변경 성공 : " + mtu);
+                    break;
+                default:
+                    AndroidUtils.toast("mtu 변경 실패 : " + mtu);
+                    Log.i("OpenEnding", "mtu 변경 실패 : " + mtu);
+                    break;
+            }
+        }
+
+        @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             super.onConnectionStateChange(gatt, status, newState);
 
@@ -139,6 +155,7 @@ public class Central extends Plugin {
                 case BluetoothProfile.STATE_CONNECTED :
                     gatt.discoverServices();
                     connectedGATT.put(gatt.getDevice().getName(), gatt);
+
                     AndroidUtils.toast("connect : " + gatt.getDevice().getName());
                     Log.i("OpenEnding", "Connect : " + gatt.getDevice().getName());
                     break;
@@ -146,6 +163,8 @@ public class Central extends Plugin {
                     gatt.disconnect();
                     gatt.close();
                     connectedGATT.remove(gatt.getDevice().getName());
+                    UnityPlayer.UnitySendMessage("AndroidConnection", "OnDeviceDisconnected", gatt.getDevice().getName());
+
                     AndroidUtils.toast("disconnect : " + gatt.getDevice().getName());
                     Log.i("OpenEnding", "Disconnect : " + gatt.getDevice().getName());
                     break;
@@ -160,7 +179,7 @@ public class Central extends Plugin {
                     Log.i("OpenEnding", "service 발견 성공 : " + gatt.getDevice().getName());
 
                     BluetoothGattService service = gatt.getService(GameProfile.GAME_SERVICE);
-                    BluetoothGattCharacteristic characteristic = service.getCharacteristic(GameProfile.GAME_DATA);
+                    BluetoothGattCharacteristic characteristic = service.getCharacteristic(GameProfile.CHARACTERISTIC_GAME_DATA);
                     gatt.setCharacteristicNotification(characteristic, true);
 
                     BluetoothGattDescriptor descriptor = characteristic.getDescriptor(GameProfile.CLIENT_CHARACTERISTIC_CONFIG);
@@ -183,6 +202,8 @@ public class Central extends Plugin {
 
             switch(status) {
                 case BluetoothGatt.GATT_SUCCESS:
+                    UnityPlayer.UnitySendMessage("AndroidConnection", "OnDeviceConnected", gatt.getDevice().getName());
+
                     AndroidUtils.toast("descriptor 설정 완료 : " + gatt.getDevice().getName());
                     Log.i("OpenEnding", "descriptor 설정 완료 : " + gatt.getDevice().getName());
                     break;
@@ -198,12 +219,12 @@ public class Central extends Plugin {
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             super.onCharacteristicChanged(gatt, characteristic);
             Log.i("OpenEnding", "onCharacteristicChanged");
-            AndroidUtils.toast("data receive : " + characteristic.getValue());
+            AndroidUtils.toast("data receive");
 
             byte[] data = characteristic.getValue();
 
             String encodedData = Base64.encodeToString(Arrays.copyOfRange(data, 0, data.length), 0);
-            UnityPlayer.UnitySendMessage("AARTest", "OnDataReceive", encodedData);
+            UnityPlayer.UnitySendMessage("AndroidConnection", "OnDataReceive", encodedData);
         }
 
         @Override
@@ -239,11 +260,22 @@ public class Central extends Plugin {
         }
     };
 
+    public void requestMtu(int mtu) {
+        if(mtu > 512) mtu = 512;
+
+        for(BluetoothGatt gatt : connectedGATT.values()) {
+            gatt.requestMtu(mtu);
+        }
+
+        AndroidUtils.toast("Try Set MTU : " + mtu);
+        Log.i("OpenEnding", "Try Set MTU : " + mtu);
+    }
+
     //C->P 송신
     public void write(String deviceName, byte[] data) {
         BluetoothGatt gatt = connectedGATT.get(deviceName);
         BluetoothGattService service = gatt.getService(GameProfile.GAME_SERVICE);
-        BluetoothGattCharacteristic characteristic = service.getCharacteristic(GameProfile.GAME_DATA);
+        BluetoothGattCharacteristic characteristic = service.getCharacteristic(GameProfile.CHARACTERISTIC_GAME_DATA);
 
         characteristic.setValue(data);
         characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
