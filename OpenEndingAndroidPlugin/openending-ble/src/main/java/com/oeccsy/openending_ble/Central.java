@@ -57,11 +57,11 @@ public class Central extends Plugin {
         connectedGATT.clear();
 
         Log.i("OpenEnding", "Init BluetoothLE System");
-        AndroidUtils.toast("init done!");
     }
 
-    public void startScanning() {
+    public void startScanning(String deviceName) {
         if (!bluetoothAdapter.isEnabled()) return;
+        bluetoothAdapter.setName(deviceName);
 
         BluetoothLeScanner scanner = bluetoothAdapter.getBluetoothLeScanner();
 
@@ -86,7 +86,7 @@ public class Central extends Plugin {
         scanner.startScan(scanFilters, scanSettings, scanCallback);
 
         Log.i("OpenEnding", "Central Start Scan");
-        AndroidUtils.toast("start scanning");
+        AndroidUtils.toast("Scan 시작");
     }
 
     public void stopScanning() {
@@ -94,7 +94,6 @@ public class Central extends Plugin {
         scanner.stopScan(scanCallback);
 
         Log.i("OpenEnding", "Central Stop Scan");
-        AndroidUtils.toast("stop scanning");
     }
 
     private final ScanCallback scanCallback = new ScanCallback() {
@@ -111,7 +110,6 @@ public class Central extends Plugin {
             device.connectGatt(_context, false, bluetoothGattCallBack);
 
             Log.i("OpenEnding", "Scan Target Found : " + result.getDevice().getAddress());
-            AndroidUtils.toast("scan target found");
         }
 
         @Override
@@ -119,7 +117,6 @@ public class Central extends Plugin {
             super.onScanFailed(errorCode);
 
             Log.i("OpenEnding", "Scan Fail");
-            AndroidUtils.toast("scan fail");
         }
     };
 
@@ -131,11 +128,9 @@ public class Central extends Plugin {
 
             switch(status) {
                 case BluetoothGatt.GATT_SUCCESS:
-                    AndroidUtils.toast("mtu 변경 성공 : " + mtu);
                     Log.i("OpenEnding", "mtu 변경 성공 : " + mtu);
                     break;
                 default:
-                    AndroidUtils.toast("mtu 변경 실패 : " + mtu);
                     Log.i("OpenEnding", "mtu 변경 실패 : " + mtu);
                     break;
             }
@@ -156,7 +151,6 @@ public class Central extends Plugin {
                     gatt.discoverServices();
                     connectedGATT.put(gatt.getDevice().getName(), gatt);
 
-                    AndroidUtils.toast("connect : " + gatt.getDevice().getName());
                     Log.i("OpenEnding", "Connect : " + gatt.getDevice().getName());
                     break;
                 case BluetoothProfile.STATE_DISCONNECTED :
@@ -165,7 +159,6 @@ public class Central extends Plugin {
                     connectedGATT.remove(gatt.getDevice().getName());
                     UnityPlayer.UnitySendMessage("AndroidConnection", "OnDeviceDisconnected", gatt.getDevice().getName());
 
-                    AndroidUtils.toast("disconnect : " + gatt.getDevice().getName());
                     Log.i("OpenEnding", "Disconnect : " + gatt.getDevice().getName());
                     break;
             }
@@ -175,7 +168,6 @@ public class Central extends Plugin {
 
             switch(status) {
                 case BluetoothGatt.GATT_SUCCESS:
-                    AndroidUtils.toast("service 발견 성공 : " + gatt.getDevice().getName());
                     Log.i("OpenEnding", "service 발견 성공 : " + gatt.getDevice().getName());
 
                     BluetoothGattService service = gatt.getService(GameProfile.GAME_SERVICE);
@@ -186,11 +178,9 @@ public class Central extends Plugin {
                     descriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
                     gatt.writeDescriptor(descriptor);
 
-                    AndroidUtils.toast("descriptor 설정 : " + gatt.getDevice().getName());
                     Log.i("OpenEnding", "descriptor 설정 : " + gatt.getDevice().getName());
                     break;
                 default:
-                    AndroidUtils.toast("service 발견 실패 : " + gatt.getDevice().getName());
                     Log.i("OpenEnding", "service 발견 실패 : " + gatt.getDevice().getName());
                     break;
             }
@@ -203,12 +193,9 @@ public class Central extends Plugin {
             switch(status) {
                 case BluetoothGatt.GATT_SUCCESS:
                     UnityPlayer.UnitySendMessage("AndroidConnection", "OnDeviceConnected", gatt.getDevice().getName());
-
-                    AndroidUtils.toast("descriptor 설정 완료 : " + gatt.getDevice().getName());
                     Log.i("OpenEnding", "descriptor 설정 완료 : " + gatt.getDevice().getName());
                     break;
                 default:
-                    AndroidUtils.toast("descriptor 설정 실패 : " + gatt.getDevice().getName());
                     Log.i("OpenEnding", "descriptor 설정 실패 : " + gatt.getDevice().getName());
                     break;
             }
@@ -219,7 +206,6 @@ public class Central extends Plugin {
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             super.onCharacteristicChanged(gatt, characteristic);
             Log.i("OpenEnding", "onCharacteristicChanged");
-            AndroidUtils.toast("data receive");
 
             byte[] data = characteristic.getValue();
 
@@ -233,11 +219,9 @@ public class Central extends Plugin {
 
             switch(status) {
                 case BluetoothGatt.GATT_SUCCESS :
-                    AndroidUtils.toast("write success");
                     Log.i("OpenEnding", "Write Success : " + gatt.getDevice().getAddress());
                     break;
                 case BluetoothGatt.GATT_FAILURE :
-                    AndroidUtils.toast("write fail");
                     Log.i("OpenEnding", "Write Fail : " + gatt.getDevice().getAddress());
                     break;
             }
@@ -249,11 +233,9 @@ public class Central extends Plugin {
 
             switch(status) {
                 case BluetoothGatt.GATT_SUCCESS :
-                    AndroidUtils.toast("read success");
                     Log.i("OpenEnding", "Read Success : " + gatt.getDevice().getAddress());
                     break;
                 case BluetoothGatt.GATT_FAILURE :
-                    AndroidUtils.toast("read fail");
                     Log.i("OpenEnding", "Read Fail : " + gatt.getDevice().getAddress());
                     break;
             }
@@ -267,7 +249,6 @@ public class Central extends Plugin {
             gatt.requestMtu(mtu);
         }
 
-        AndroidUtils.toast("Try Set MTU : " + mtu);
         Log.i("OpenEnding", "Try Set MTU : " + mtu);
     }
 

@@ -88,7 +88,7 @@ public class BluetoothLEUtils extends Plugin {
         } else {
             _activity.requestPermissions(permissionsApi31, REQUEST_PERMISSION_CODE);
         }
-        AndroidUtils.toast("permission request done!");
+        AndroidUtils.toast("Bluetooth 권한 요청 완료");
     }
 
 //    public void requestEnableBluetoothLE() {

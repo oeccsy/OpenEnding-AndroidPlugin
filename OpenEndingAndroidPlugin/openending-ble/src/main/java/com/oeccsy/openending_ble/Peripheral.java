@@ -48,7 +48,6 @@ public class Peripheral extends Plugin {
         peripheralThreadHandler = new Handler();
 
         Log.i("OpenEnding", "Init BluetoothLE System");
-        AndroidUtils.toast("init done!");
     }
 
     public void startAdvertising(String deviceName) {
@@ -73,47 +72,52 @@ public class Peripheral extends Plugin {
 
         peripheralThreadHandler.postDelayed(() -> {
             stopAdvertising();
-        }, 2 * 60 * 1000);
+        }, 30 * 1000);
 
         advertiser.startAdvertising(advertiseSettings, advertiseData, advertiseCallback);
-        AndroidUtils.toast("start advertising!");
+
+        Log.i("OpenEnding", "Peripheral Start Advertise");
+        AndroidUtils.toast("Advertise 시작");
     }
 
     public void stopAdvertising() {
         BluetoothLeAdvertiser advertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
         if(advertiser == null) return;
         advertiser.stopAdvertising(advertiseCallback);
-        AndroidUtils.toast("stop advertising!");
+
+        Log.i("OpenEnding", "Peripheral Stop Advertise");
     }
 
     private AdvertiseCallback advertiseCallback = new AdvertiseCallback() {
         @Override
         public void onStartSuccess(AdvertiseSettings settingsInEffect) {
             super.onStartSuccess(settingsInEffect);
-            AndroidUtils.toast("Advertising started");
+            Log.i("OpenEnding", "Peripheral Start Success");
         }
 
         @Override
         public void onStartFailure(int errorCode) {
             super.onStartFailure(errorCode);
-            AndroidUtils.toast("Advertising failed" + errorCode);
+            Log.i("OpenEnding", "Peripheral Start Fail : " + errorCode);
         }
     };
 
-    private void startServer() {
+    private void startGattServer() {
         bluetoothGattServer = bluetoothManager.openGattServer(_context, gattServerCallback);
         if (bluetoothGattServer == null) return;
 
         bluetoothGattServer.clearServices();
         bluetoothGattServer.addService(GameProfile.getService());
 
-        AndroidUtils.toast("start Gatt Server!");
+        Log.i("OpenEnding", "Peripheral Start GattServer");
     }
 
-    private void stopServer() {
+    private void stopGattServer() {
         if(bluetoothGattServer == null) return;
 
         bluetoothGattServer.close();
+
+        Log.i("OpenEnding", "Peripheral Stop GattServer");
     }
 
     private BluetoothGattServerCallback gattServerCallback = new BluetoothGattServerCallback() {
@@ -133,14 +137,14 @@ public class Peripheral extends Plugin {
                     centralDevice = device;
                     UnityPlayer.UnitySendMessage("AndroidConnection", "OnDeviceConnected", device.getName());
 
-                    AndroidUtils.toast("connect");
+                    AndroidUtils.toast(device.getName() + "연결 완료");
                     Log.i("OpenEnding", "Connect : " + device.getAddress());
                     break;
                 case BluetoothProfile.STATE_DISCONNECTED :
                     centralDevice = null;
                     UnityPlayer.UnitySendMessage("AndroidConnection", "OnDeviceDisconnected", device.getName());
 
-                    AndroidUtils.toast("disconnect");
+                    AndroidUtils.toast(device.getName() + "연결 끊김");
                     Log.i("OpenEnding", "Disconnect : " + device.getAddress());
                     break;
             }
@@ -159,7 +163,6 @@ public class Peripheral extends Plugin {
         public void onCharacteristicWriteRequest(BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, boolean preparedWrite, boolean responseNeeded, int offset, byte[] value) {
             super.onCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset, value);
             Log.i("OpenEnding", "onCharacteristicWriteRequest");
-            AndroidUtils.toast("data receive");
 
             BluetoothGattCharacteristic ownDeviceCharacteristic = GameProfile.getService().getCharacteristic(characteristic.getUuid());
             ownDeviceCharacteristic.setValue(value);
@@ -193,6 +196,5 @@ public class Peripheral extends Plugin {
         bluetoothGattServer.notifyCharacteristicChanged(device, characteristic, true);
 
         Log.i("OpenEnding", "indicate");
-        AndroidUtils.toast("indicate");
     }
 }
