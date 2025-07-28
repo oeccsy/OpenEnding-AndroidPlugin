@@ -70,7 +70,6 @@ public class Central extends Plugin {
                 .build();
 
         ArrayList<ScanFilter> scanFilters = new ArrayList<ScanFilter>();
-        scanFilters.clear();
         scanFilters.add(scanFilter);
 
         ScanSettings scanSettings = new ScanSettings.Builder()
@@ -141,6 +140,10 @@ public class Central extends Plugin {
             super.onConnectionStateChange(gatt, status, newState);
 
             if (status == BluetoothGatt.GATT_FAILURE) {
+                gatt.close();
+                connectedGATT.remove(gatt.getDevice().getName());
+                UnityPlayer.UnitySendMessage("AndroidConnection", "OnDeviceDisconnected", gatt.getDevice().getName());
+
                 Log.i("OpenEnding", "GATT Failure, status : " + status);
                 AndroidUtils.toast("GATT FAILURE");
                 return;
@@ -154,7 +157,6 @@ public class Central extends Plugin {
                     Log.i("OpenEnding", "Connect : " + gatt.getDevice().getName());
                     break;
                 case BluetoothProfile.STATE_DISCONNECTED :
-                    gatt.disconnect();
                     gatt.close();
                     connectedGATT.remove(gatt.getDevice().getName());
                     UnityPlayer.UnitySendMessage("AndroidConnection", "OnDeviceDisconnected", gatt.getDevice().getName());
@@ -217,6 +219,7 @@ public class Central extends Plugin {
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicWrite(gatt, characteristic, status);
 
+            Log.i("OpenEnding", "onCharacteristicWrite  : " + status);
             switch(status) {
                 case BluetoothGatt.GATT_SUCCESS :
                     Log.i("OpenEnding", "Write Success : " + gatt.getDevice().getAddress());
@@ -230,6 +233,7 @@ public class Central extends Plugin {
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicRead(gatt, characteristic, status);
+            Log.i("OpenEnding", "Read Success : " + characteristic.getValue());
 
             switch(status) {
                 case BluetoothGatt.GATT_SUCCESS :
